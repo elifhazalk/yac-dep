@@ -1,0 +1,9 @@
+[Unit]
+Description=YACS CPU Frequency Limiter Service (Firefly)
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /var/yacs-cpu-freq-limiter.sh
+
+[Install]
+WantedBy=multi-user.target

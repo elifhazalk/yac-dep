@@ -1,0 +1,19 @@
+- name: Create arduino directory and copy m4-user-sketch.elf
+  hosts: portenta
+  vars_files:
+    - vault.yml
+  gather_facts: no
+  vars:
+    DIRECTORY: "yacs_lynx_sketch"
+  tasks:
+    - name: Ensure arduino directory exists under /tmp
+      ansible.builtin.file:
+        path: /tmp/arduino
+        state: directory
+        mode: "0755"
+
+    - name: Download m4-user-sketch.elf from FTP server
+      ansible.builtin.get_url:
+        url: "ftp://{{ vault.FTP_USER_DEV }}:{{ vault.FTP_PASS_DEV }}@{{ vault.FTP_HOST_DEV }}/{{ DIRECTORY }}/m4-user-sketch.elf"
+        dest: /tmp/arduino/m4-user-sketch.elf
+        mode: "0644"

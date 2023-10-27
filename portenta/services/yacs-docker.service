@@ -1,0 +1,13 @@
+[Unit]
+Description=Start Docker Compose for yacs_lynx
+Requires=docker.service
+After=network.target
+
+[Service]
+Type=oneshot
+User=fio
+ExecStart=/bin/bash /var/yacs-docker.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

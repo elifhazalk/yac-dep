@@ -1,0 +1,27 @@
+- name: Setup docker configuration on portenta devices
+  hosts: portenta
+  vars_files:
+    - vault.yml
+  gather_facts: no
+  become: yes
+  vars:
+    DIRECTORY: "yacs_portenta_config/prod"
+
+  tasks:
+    - name: Download yacs-docker.sh and give permissions
+      ansible.builtin.get_url:
+        url: "ftp://{{ vault.FTP_USER_PROD }}:{{ vault.FTP_PASS_PROD }}@{{ vault.FTP_HOST_PROD }}/{{ DIRECTORY }}/yacs-docker.sh"
+        dest: "/var/yacs-docker.sh"
+        mode: "0755"
+
+    - name: Download yacs-docker.service
+      ansible.builtin.get_url:
+        url: "ftp://{{ vault.FTP_USER_PROD }}:{{ vault.FTP_PASS_PROD }}@{{ vault.FTP_HOST_PROD }}/{{ DIRECTORY }}/yacs-docker.service"
+        dest: "/etc/systemd/system/yacs-docker.service"
+        mode: "0644"
+
+    - name: Reload systemd daemon
+      command: systemctl daemon-reload
+
+    - name: Enable yacs-docker.service
+      command: systemctl enable yacs-docker.service

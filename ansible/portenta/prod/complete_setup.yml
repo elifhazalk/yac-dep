@@ -1,0 +1,191 @@
+- name: Complete setup for portenta
+  hosts: portenta
+  vars_files:
+    - vault.yml
+  gather_facts: no
+  become: yes
+  vars:
+    CONFIG_DIRECTORY: "yacs_portenta_config/prod"
+    SKETCH_DIRECTORY: "yacs_lynx_sketch"
+    LYNX_DIRECTORY: "yacs_lynx"
+    docker_daemon_file: "/etc/docker/daemon.json"
+    insecure_registries: ["10.17.100.2:8000"]
+    log_driver: "json-file"
+    log_opts:
+      max-size: "10m"
+      max-file: "5"
+  
+  vars_prompt:
+    - name: "version"
+      prompt: "Enter Lynx version (leave empty for 'latest'):"
+      private: no
+      default: "latest"
+  
+  tasks:
+    # Setup network configuration on portenta devices
+    - name: Download yacs-network.sh and give permissions
+      ansible.builtin.get_url:
+        url: "ftp://{{ vault.FTP_USER_PROD }}:{{ vault.FTP_PASS_PROD }}@{{ vault.FTP_HOST_PROD }}/{{ CONFIG_DIRECTORY }}/yacs-network.sh"
+        dest: "/var/yacs-network.sh"
+        mode: "0755"
+
+    - name: Download yacs-network.service
+      ansible.builtin.get_url:
+        url: "ftp://{{ vault.FTP_USER_PROD }}:{{ vault.FTP_PASS_PROD }}@{{ vault.FTP_HOST_PROD }}/{{ CONFIG_DIRECTORY }}/yacs-network.service"
+        dest: "/etc/systemd/system/yacs-network.service"
+        mode: "0644"
+
+    - name: Reload systemd daemon
+      command: systemctl daemon-reload
+
+    - name: Enable yacs-network.service
+      command: systemctl enable yacs-network.service
+    
+    # Setup docker configuration on portenta devices
+    - name: Download yacs-docker.sh and give permissions
+      ansible.builtin.get_url:
+        url: "ftp://{{ vault.FTP_USER_PROD }}:{{ vault.FTP_PASS_PROD }}@{{ vault.FTP_HOST_PROD }}/{{ CONFIG_DIRECTORY }}/yacs-docker.sh"
+        dest: "/var/yacs-docker.sh"
+        mode: "0755"
+
+    - name: Download yacs-docker.service
+      ansible.builtin.get_url:
+        url: "ftp://{{ vault.FTP_USER_PROD }}:{{ vault.FTP_PASS_PROD }}@{{ vault.FTP_HOST_PROD }}/{{ CONFIG_DIRECTORY }}/yacs-docker.service"
+        dest: "/etc/systemd/system/yacs-docker.service"
+        mode: "0644"
+
+    - name: Reload systemd daemon
+      command: systemctl daemon-reload
+
+    - name: Enable yacs-docker.service
+      command: systemctl enable yacs-docker.service
+
+    # Docker daemon config
+    - name: Check if docker daemon.json exists
+      stat:
+        path: "{{ docker_daemon_file }}"
+      register: stat_result
+
+    - name: Load existing daemon.json
+      command: cat "{{ docker_daemon_file }}"
+      register: daemon_json
+      changed_when: false
+      when: stat_result.stat.exists
+
+    - name: Parse existing daemon.json
+      set_fact:
+        daemon_json_content: "{{ (daemon_json.stdout | from_json) if daemon_json.stdout != '' else {} }}"
+      when: stat_result.stat.exists
+
+    - name: Update daemon.json
+      block:
+        - name: Set insecure-registries
+          set_fact:
+            daemon_json_content: "{{ daemon_json_content | combine({'insecure-registries': insecure_registries}, recursive=true) }}"
+
+        - name: Set log-driver
+          set_fact:
+            daemon_json_content: "{{ daemon_json_content | combine({'log-driver': log_driver}, recursive=true) }}"
+
+        - name: Set log-opts
+          set_fact:
+            daemon_json_content: "{{ daemon_json_content | combine({'log-opts': log_opts}, recursive=true) }}"
+
+      when: stat_result.stat.exists
+
+    - name: Create daemon.json with desired content if file doesn't exist
+      copy:
+        content: |
+          {
+            "insecure-registries": ["10.17.100.2:8000"],
+            "log-driver": "json-file",
+            "log-opts": {
+              "max-size": "10m",
+              "max-file": "5"
+            }
+          }
+        dest: "{{ docker_daemon_file }}"
+      when: stat_result.stat.exists == false
+
+    - name: Write new daemon.json
+      copy:
+        content: "{{ daemon_json_content | to_nice_json }}"
+        dest: "{{ docker_daemon_file }}"
+      when: stat_result.stat.exists
+
+    - name: Restart Docker service
+      shell: |
+        systemctl restart docker
+      args:
+        executable: /bin/bash
+
+# Sketch
+    - name: Ensure arduino directory exists under /tmp
+      ansible.builtin.file:
+        path: /tmp/arduino
+        state: directory
+        mode: "0755"
+
+    - name: Download m4-user-sketch.elf from FTP server
+      ansible.builtin.get_url:
+        url: "ftp://{{ vault.FTP_USER_PROD }}:{{ vault.FTP_PASS_PROD }}@{{ vault.FTP_HOST_PROD }}/{{ SKETCH_DIRECTORY }}/m4-user-sketch.elf"
+        dest: /tmp/arduino/m4-user-sketch.elf
+        mode: "0644"
+
+    # Lynx
+    - name: Remove previous harbor hostname
+      lineinfile:
+        path: /etc/hosts
+        regexp: '.*harbor.*'
+        state: absent
+
+    - name: Add  harbor hostname to /etc/hosts
+      lineinfile:
+        path: /etc/hosts
+        line: '10.17.100.2 harbor'
+        state: present
+
+    - name: Create folder
+      ansible.builtin.command:
+        cmd: "mkdir -p {{ LYNX_DIRECTORY }}"
+      args:
+        creates: "{{ LYNX_DIRECTORY }}"
+
+    - name: Download files directly on the target device
+      ansible.builtin.get_url:
+        url: "ftp://{{ vault.FTP_USER_PROD }}:{{ vault.FTP_PASS_PROD }}@{{ vault.FTP_HOST_PROD }}/{{ LYNX_DIRECTORY }}/{{ version }}/{{ item.file }}"
+        dest: "{{ LYNX_DIRECTORY }}/{{ item.file }}"
+        mode: "{{ item.mode | default(omit) }}"
+      loop:
+        - file: .env
+        - file: setup.sh
+          mode: "0755"
+        - file: docker-compose.yml
+        - file: promtail-config.j2
+      loop_control:
+        loop_var: item
+
+    - name: Fetch the template back to the Ansible Controller
+      ansible.builtin.fetch:
+        src: "{{ LYNX_DIRECTORY }}/promtail-config.j2"
+        dest: "promtail-config.j2"
+        flat: yes
+
+    - name: Apply the fetched promtail template to create configuration on target
+      ansible.builtin.template:
+        src: "promtail-config.j2"
+        dest: "{{ LYNX_DIRECTORY }}/promtail-config.yaml"
+
+    - name: Docker login for prod
+      command: docker login {{ vault.HARBOR_HOST_PROD }} -u {{ vault.HARBOR_USER_PROD }} -p {{ vault.HARBOR_PASS_PROD }}
+
+    - name: Stop and remove Docker container
+      ansible.builtin.docker_container:
+        name: "{{ LYNX_DIRECTORY }}"
+        state: absent
+        force_kill: yes
+
+    - name: Execute setup.sh
+      ansible.builtin.command:
+        cmd: "./setup.sh {{ version }}"
+        chdir: "{{ LYNX_DIRECTORY }}"

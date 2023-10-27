@@ -1,0 +1,20 @@
+---
+- name: Copy and Execute edit.sh on remote servers
+  hosts: portenta
+  vars_files:
+    - vault.yml
+  gather_facts: no
+  become: yes
+    vars:
+    DIRECTORY: "yacs_portenta_config/prod"
+
+  tasks:
+    - name: Copy edit.sh to server
+      ansible.builtin.get_url:
+        url: "ftp://{{ vault.FTP_USER_PROD }}:{{ vault.FTP_PASS_PROD }}@{{ vault.FTP_HOST_PROD }}/{{ DIRECTORY }}/yacs-ntp.sh"
+        dest: /tmp/edit.sh
+        mode: '0755'
+
+    - name: Execute edit.sh on server
+      command: /tmp/edit.sh
+

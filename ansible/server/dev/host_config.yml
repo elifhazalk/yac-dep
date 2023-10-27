@@ -1,0 +1,20 @@
+---
+- name: Update hosts file for harbor
+  hosts: server
+  vars_files:
+    - vault.yml
+  gather_facts: no
+  become: yes
+  
+  tasks:
+    - name: Remove previous harbor hostname
+      lineinfile:
+        path: /etc/hosts
+        regexp: '.*harbor.*'
+        state: absent
+
+    - name: Add  harbor hostname to /etc/hosts
+      lineinfile:
+        path: /etc/hosts
+        line: '2.12.100.145 harbor'
+        state: present

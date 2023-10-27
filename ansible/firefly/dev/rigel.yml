@@ -1,0 +1,53 @@
+---
+- name: Update yacs-rigel
+  hosts: firefly
+  remote_user: svrn
+  vars_files:
+    - vault.yml
+  gather_facts: no
+  vars:
+    DIRECTORY: "yacs_rigel"
+  vars_prompt:
+    - name: "version"
+      prompt: "Enter version (leave empty for 'latest'):"
+      private: no
+      default: "latest"
+
+  tasks:
+    - name: Create folder
+      ansible.builtin.command:
+        cmd: "mkdir -p {{ DIRECTORY }}/{{ version }}"
+      args:
+        creates: "{{ DIRECTORY }}/{{ version }}"
+
+    - name: Download files directly on the target device
+      ansible.builtin.get_url:
+        url: "ftp://{{ vault.FTP_USER_DEV }}:{{ vault.FTP_PASS_DEV }}@{{ vault.FTP_HOST_DEV }}/{{ DIRECTORY }}/{{ version }}/{{ item.file }}"
+        dest: "{{ DIRECTORY }}/{{ version }}/{{ item.file }}"
+        mode: "{{ item.mode | default(omit) }}"
+      loop:
+        - file: setup.sh
+          mode: "0755"
+        - file: slam_pkg_ros2_install.tar.gz
+        - file: slam_config.tar.gz
+      loop_control:
+        loop_var: item
+
+    - name: Pull vocabulary.tar.gz from FTP
+      ansible.builtin.get_url:
+        url: "ftp://{{ vault.FTP_USER_DEV }}:{{ vault.FTP_PASS_DEV }}@{{ vault.FTP_HOST_DEV }}/{{ DIRECTORY }}/vocabulary/{{ item.file }}"
+        dest: "{{ DIRECTORY }}/{{ version }}/{{ item.file }}"
+        mode: "{{ item.mode | default(omit) }}"
+      loop:
+        - file: vocabulary.tar.gz
+      loop_control:
+        loop_var: item
+
+    - name: Execute script with .bashrc sourced
+      ansible.builtin.shell:
+        cmd: "bash -ic 'source ~/.bashrc && echo ROS2_WS: ${ROS2_WS} && ./setup.sh'"
+        chdir: "{{ DIRECTORY }}/{{ version }}"
+      args:
+        executable: /bin/bash
+      become: true
+      become_user: svrn

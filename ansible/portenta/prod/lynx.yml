@@ -1,0 +1,71 @@
+- name: Update Portenta devices
+  hosts: portenta
+  vars_files:
+    - vault.yml
+  gather_facts: no
+  become: yes
+  vars:
+    DIRECTORY: "yacs_lynx"
+  vars_prompt:
+    - name: "version"
+      prompt: "Enter version (leave empty for 'latest'):"
+      private: no
+      default: "latest"
+
+  tasks:
+    - name: Remove previous harbor hostname
+      lineinfile:
+        path: /etc/hosts
+        regexp: ".*harbor.*"
+        state: absent
+
+    - name: Add  harbor hostname to /etc/hosts
+      lineinfile:
+        path: /etc/hosts
+        line: "10.17.100.2 harbor"
+        state: present
+
+    - name: Create folder
+      ansible.builtin.command:
+        cmd: "mkdir -p {{ DIRECTORY }}"
+      args:
+        creates: "{{ DIRECTORY }}"
+
+    - name: Download files directly on the target device
+      ansible.builtin.get_url:
+        url: "ftp://{{ vault.FTP_USER_PROD }}:{{ vault.FTP_PASS_PROD }}@{{ vault.FTP_HOST_PROD }}/{{ DIRECTORY }}/{{ version }}/{{ item.file }}"
+        dest: "{{ DIRECTORY }}/{{ item.file }}"
+        mode: "{{ item.mode | default(omit) }}"
+      loop:
+        - file: .env
+        - file: setup.sh
+          mode: "0755"
+        - file: docker-compose.yml
+        - file: promtail-config.j2
+      loop_control:
+        loop_var: item
+
+    - name: Fetch the template back to the Ansible Controller
+      ansible.builtin.fetch:
+        src: "{{ DIRECTORY }}/promtail-config.j2"
+        dest: "promtail-config.j2"
+        flat: yes
+
+    - name: Apply the fetched promtail template to create configuration on target
+      ansible.builtin.template:
+        src: "promtail-config.j2"
+        dest: "{{ DIRECTORY }}/promtail-config.yaml"
+
+    - name: Docker login for prod
+      command: docker login {{ vault.HARBOR_HOST_PROD }} -u {{ vault.HARBOR_USER_PROD }} -p {{ vault.HARBOR_PASS_PROD }}
+
+    - name: Stop and remove Docker container
+      ansible.builtin.docker_container:
+        name: "{{ DIRECTORY }}"
+        state: absent
+        force_kill: yes
+
+    - name: Execute setup.sh
+      ansible.builtin.command:
+        cmd: "./setup.sh {{ version }}"
+        chdir: "{{ DIRECTORY }}"

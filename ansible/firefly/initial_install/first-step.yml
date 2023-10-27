@@ -1,0 +1,46 @@
+---
+- name: Loader, Ubuntu, Wİfi, User, Password
+  hosts: all
+
+  tasks:
+    - name: Run a loader script
+      ansible.builtin.script:
+        cmd: loader.sh
+        
+    - name: pause for 40 seconds
+      pause:
+        seconds: 40        
+    - name: Run a ubuntu script
+      ansible.builtin.script:
+        cmd: ubuntu.sh
+
+    - name: pause for 40 seconds
+      pause:
+        seconds: 40
+
+    - name: Run a WiFi script
+      script: wifi-ip.sh
+      register: results
+    - debug:
+        var: results.stdout
+
+    - name: Run send, user, pass script
+      ansible.builtin.script:
+         cmd: send-user-pass.sh
+
+    - name: pause for 40 seconds
+      pause:
+        seconds: 40
+
+    - name: Run send-setup-device.sh
+      ansible.builtin.script:
+         cmd: send-setup-device.sh
+    
+    - name: pause for 40 seconds
+      pause:
+        seconds: 30
+    
+    - name: Run send-gpio-perm.sh
+      ansible.builtin.script:
+         cmd: send-setup-gpio.sh
+    

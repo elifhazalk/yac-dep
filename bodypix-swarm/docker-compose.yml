@@ -1,0 +1,40 @@
+version: '3.7'
+
+services:
+  draco:
+    image: 10.17.100.2:8000/yacs/draco:latest
+    env_file:
+      - draco.env
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: any
+  
+  draco-lb:
+    image: nginx:1.21
+    volumes:
+      - ./draco-lb.conf:/etc/nginx/nginx.conf
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+  
+  bodypix:
+    image: 10.17.100.2:8000/yacs/bodypix:latest
+    env_file:
+      - bodypix.env
+    deploy:
+      replicas: 10
+      restart_policy:
+        condition: any
+
+  bp-lb:
+    image: nginx:1.21
+    volumes:
+      - ./bp-lb.conf:/etc/nginx/nginx.conf
+    ports:
+      - 8000:80
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any

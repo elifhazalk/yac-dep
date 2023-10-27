@@ -1,0 +1,7 @@
+[servers]
+#10.17
+#
+[servers:vars]
+ansible_user=serverusername
+ansible_become=yes
+ansible_become_method=sudo

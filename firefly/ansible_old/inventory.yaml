@@ -1,0 +1,18 @@
+all:
+  hosts:
+  children:
+    ready:
+      hosts:
+        f01:
+          ansible_host: 2.12.100.79
+          device_id: 1
+    awaiting:
+      hosts:
+        f02:
+          ansible_host: 2.12.100.44
+          device_id: 2
+    test:
+      hosts:
+        f01:
+  vars:
+    ansible_user: svrn

@@ -1,0 +1,72 @@
+---
+- hosts: portenta
+  vars_files:
+    - vault.yml
+  gather_facts: no
+  become: yes
+  vars:
+    file: "/etc/docker/daemon.json"
+    insecure_registries: ["10.17.100.2:8000"]
+    log_driver: "json-file"
+    log_opts:
+      max-size: "10m"
+      max-file: "5"
+
+  tasks:
+    - name: Check if docker daemon.json exists
+      stat:
+        path: "{{ file }}"
+      register: stat_result
+
+    - name: Load existing daemon.json
+      command: cat "{{ file }}"
+      register: daemon_json
+      changed_when: false
+      when: stat_result.stat.exists
+
+    - name: Parse existing daemon.json
+      set_fact:
+        daemon_json_content: "{{ (daemon_json.stdout | from_json) if daemon_json.stdout != '' else {} }}"
+      when: stat_result.stat.exists
+
+    - name: Update daemon.json
+      block:
+        - name: Set insecure-registries
+          set_fact:
+            daemon_json_content: "{{ daemon_json_content | combine({'insecure-registries': insecure_registries}, recursive=true) }}"
+
+        - name: Set log-driver
+          set_fact:
+            daemon_json_content: "{{ daemon_json_content | combine({'log-driver': log_driver}, recursive=true) }}"
+
+        - name: Set log-opts
+          set_fact:
+            daemon_json_content: "{{ daemon_json_content | combine({'log-opts': log_opts}, recursive=true) }}"
+
+      when: stat_result.stat.exists
+
+    - name: Create daemon.json with desired content if file doesn't exist
+      copy:
+        content: |
+          {
+            "insecure-registries": ["10.17.100.2:8000"],
+            "log-driver": "json-file",
+            "log-opts": {
+              "max-size": "10m",
+              "max-file": "5"
+            }
+          }
+        dest: "{{ file }}"
+      when: stat_result.stat.exists == false
+
+    - name: Write new daemon.json
+      copy:
+        content: "{{ daemon_json_content | to_nice_json }}"
+        dest: "{{ file }}"
+      when: stat_result.stat.exists
+
+    - name: Restart Docker service
+      shell: |
+        systemctl restart docker
+      args:
+        executable: /bin/bash

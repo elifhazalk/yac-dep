@@ -1,0 +1,27 @@
+- name: Setup network configuration on portenta devices
+  hosts: portenta
+  vars_files:
+    - vault.yml
+  gather_facts: no
+  become: yes
+  vars:
+    DIRECTORY: "yacs_portenta_config/prod"
+
+  tasks:
+    - name: Download yacs-network.sh and give permissions
+      ansible.builtin.get_url:
+        url: "ftp://{{ vault.FTP_USER_DEV }}:{{ vault.FTP_PASS_DEV }}@{{ vault.FTP_HOST_DEV }}/{{ DIRECTORY }}/yacs-network.sh"
+        dest: "/var/yacs-network.sh"
+        mode: "0755"
+
+    - name: Download yacs-network.service
+      ansible.builtin.get_url:
+        url: "ftp://{{ vault.FTP_USER_DEV }}:{{ vault.FTP_PASS_DEV }}@{{ vault.FTP_HOST_DEV }}/{{ DIRECTORY }}/yacs-network.service"
+        dest: "/etc/systemd/system/yacs-network.service"
+        mode: "0644"
+
+    - name: Reload systemd daemon
+      command: systemctl daemon-reload
+
+    - name: Enable yacs-network.service
+      command: systemctl enable yacs-network.service

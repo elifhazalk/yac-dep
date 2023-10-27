@@ -1,0 +1,14 @@
+[Unit]
+Description=Request User ID Service
+After=yacs-network.service
+
+[Service]
+Type=oneshot
+ExecStartPre=/bin/sleep 10
+ExecStart=/bin/python3 /var/request_info_via_mac.py --runViaRoot 1 --host 2.12.100.112 --port 8888 --useLoggingLib 0
+LimitNPROC=1
+ProtectHome=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target

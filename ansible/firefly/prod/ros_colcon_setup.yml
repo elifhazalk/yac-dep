@@ -1,0 +1,176 @@
+- name: install ROS2 Foxy (Debian)
+  hosts: firefly
+  remote_user: svrn
+  vars_files:
+    - vault.yml
+  gather_facts: no
+
+  tasks:
+    - name: Ensure ros2.list file exists
+      file:
+        path: /etc/apt/sources.list.d/ros2.list
+        state: touch
+        owner: root
+        group: root
+        mode: 0644
+      become: true
+
+    - name: apt update, surpass previous ROS packages
+      shell: sudo rm /etc/apt/sources.list.d/ros2.list || apt-get update
+      become: true
+      async: 150
+      poll: 0
+
+    - name: install locale
+      become: true
+      apt:
+        name:
+          - locales
+        state: present
+
+    - name: install locale
+      shell: sudo locale-gen en_US en_US.UTF-8  && sudo update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
+
+    - name: export locate variable
+      lineinfile:
+        dest: /home/svrn/.bashrc
+        line: "export LANG=en_US.UTF-8"
+
+    - name: Update apt cache
+      become: true
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install software-properties-common
+      become: true
+      apt:
+        name:
+          - software-properties-common
+        state: present
+
+    - name: Add for setup sources
+      shell: sudo add-apt-repository universe
+
+    - name: install ROS dependencies
+      shell: |
+        sudo apt install -y curl gnupg2 lsb-release
+        sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
+      become: true
+
+    - name: Upgrade all apt packages
+      become: true
+      apt:
+        upgrade: dist
+        force_apt_get: yes
+
+    - name: Install additional necessary packages
+      become: true
+      apt:
+        name:
+          - gnupg2
+          - lsb-release
+          - python3
+          - python3-pip
+          - git
+          - gdb
+          - ninja-build
+          - libboost-system1.71-dev
+          - libboost-thread1.71-dev
+          - pv
+          - ncftp
+          - libglew2.1
+          - libopengl-dev
+          - avrdude
+        state: present
+
+    - name: Add ROS 2 repo to apt sources
+      become: true
+      shell: echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
+
+    - name: Update apt
+      become: true
+      apt:
+        update_cache: yes
+        force_apt_get: yes
+        cache_valid_time: 7200
+
+    - name: Install python3-pip
+      become: true
+      apt:
+        name:
+          - python3-pip
+        state: present
+
+    - name: Install python3-colcon-common-extensions via pip
+      become: true
+      command: pip3 install colcon-common-extensions
+
+
+
+    - name: Copy ros2_install_script.sh to server
+      copy:
+        src: ros2_install_script.sh  
+        dest: /tmp/ros2_install_script.sh
+        mode: '0755'
+
+    - name: Execute ros2_install_script.sh on server
+      command: /tmp/ros2_install_script.sh
+
+
+    - name: Install additional ROS packages
+      become: true
+      apt:
+        name:
+          - python3-argcomplete
+          - ros-dev-tools
+          - ros-foxy-cv-bridge
+        state: present
+
+    - name: Copy nvm.sh to server
+      copy:
+        src: nvm.sh  
+        dest: /tmp/nvm.sh
+        mode: '0755'
+      
+    - name: Run nvm.sh on server
+      command: /bin/bash /tmp/nvm.sh
+
+    - name: Add ROS to bashrc
+      lineinfile:
+        dest: /home/svrn/.bashrc
+        line: |
+          export ROS1_INSTALL_PATH=/opt/ros/noetic
+          export ROS2_INSTALL_PATH=/opt/ros/foxy
+          source /opt/ros/foxy/setup.bash
+          export _colcon_cd_root=/opt/ros/foxy/
+          source /usr/share/colcon_cd/function/colcon_cd.sh
+          export ROS_DOMAIN_ID=3
+          source /usr/share/colcon_argcomplete/hook/colcon-argcomplete.bash
+          export SSL_CERT_FILE=/usr/lib/ssl/certs/ca-certificates.crt
+          export ROS2_WS=${HOME}/Workspace/ros2_ws
+          source ${ROS2_WS}/install/setup.bash
+          export PATH="$PATH:/$HOME/.local/bin"
+          export CONFIGS_DIR=${HOME}/Workspace/Configs
+          export SAVED_MAPS_DIR=${HOME}/Workspace/SavedMaps
+          export OUTPUTS_DIR=${HOME}/Outputs
+          export ORCHESTRATOR_MODE=2
+          export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+          export RMW_FASTRTPS_USE_QOS_FROM_XML=1
+          export FASTRTPS_DEFAULT_PROFILES_FILE=$CONFIGS_DIR/ros_middleware_config/localhost_only.xml
+      become: yes
+
+    - name: Set the timezone to Asia/Istanbul
+      shell: timedatectl set-timezone Asia/Istanbul
+      become: yes
+
+    - name: Set net_raw capability for node binary
+      command: sudo setcap cap_net_raw+eip /tmp/.nvm/versions/node/v8.9.0/bin/node
+      become: yes
+
+
+
+
+
+

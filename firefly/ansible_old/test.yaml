@@ -1,0 +1,13 @@
+- name: Test Playbook
+  hosts: test
+  tasks:
+    - name: Ping my hosts
+      ansible.builtin.ping:
+    - name: Print message
+      ansible.builtin.debug:
+        msg: Hello world
+    - name: Test task
+      ansible.builtin.debug:
+        msg: variable -> {{ device_id }}
+      tags:
+        - debug

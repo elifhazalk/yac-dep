@@ -1,0 +1,3 @@
+vault:
+  SSH_USERNAME: abc
+  SSH_PASSWORD: abc

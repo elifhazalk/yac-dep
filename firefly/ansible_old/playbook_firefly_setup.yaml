@@ -1,0 +1,167 @@
+- name: Firefly initial setup
+  hosts: awaiting
+  tasks:
+  - name: Ping my hosts
+    ansible.builtin.ping:
+  - name: Print message
+    ansible.builtin.debug:
+      msg: Hello world
+  - name: Run update & upgrade
+    become: true
+    ansible.builtin.apt:
+      only_upgrade: true
+  - name: Create ros2 workspace folder
+    ansible.builtin.file:
+      path: /home/svrn/Workspace/ros2_ws/src
+      state: directory
+      recurse: true
+      owner: svrn
+  - name: Install ROS2 dependencies, python3 and git
+    become: true
+    ansible.builtin.apt:
+      pkg:
+        - curl
+        - gnupg2
+        - lsb-release
+        - locales
+        - software-properties-common
+        - python3
+        - python3-pip
+        - git
+  - name: Setup locale
+    become: true
+    become_user: svrn
+    ansible.builtin.shell: |
+      locale-gen en_US en_US.UTF-8
+      update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
+      export LANG=en_US.UTF-8
+      exit 0
+    register: myoutput
+    changed_when: myoutput.rc != 0
+    args:
+      executable: /bin/bash
+  - name: Print shell output
+    ansible.builtin.debug:
+      var: myoutput.stdout_lines
+  # - name: Enable universe repository
+  #   ansible.builtin.apt_repository:
+  #     repo: "{{ item }}"
+  #   loop:
+  #     - "deb http://archive.ubuntu.com/ubuntu/ focal universe"
+  #     - "deb http://archive.ubuntu.com/ubuntu/ focal-updates universe"
+  #     - "deb http://security.ubuntu.com/ubuntu/ focal-security universe"
+  - name: Setup ROS2 keys
+    become: true
+    ansible.builtin.apt_key:
+      keyring: /usr/share/keyrings/ros-archive-keyring.gpg
+      url: https://raw.githubusercontent.com/ros/rosdistro/master/ros.key
+  - name: Add ROS2 Repo to sources list
+    ansible.builtin.apt_repository:
+      repo: "deb [arch={{ architecture }} signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu {{ ubuntu_release }} main"
+      state: present
+    vars:
+      architecture: arm64
+      ubuntu_release: focal
+  - name: Install ROS2
+    become: true
+    ansible.builtin.apt:
+      pkg:
+        - ros-foxy-ros-base
+        - ros-dev-tools
+        - python3-argcomplete
+        - ros-foxy-example*
+        - ros-foxy-demo-nodes-*
+  - name: Install argcomplete & colcon
+    become: true
+    ansible.builtin.apt:
+      pkg:
+        - python3-colcon-common-extensions
+        - python3-argcomplete
+  - name: .bashrc update
+    become: true
+    become_user: svrn
+    ansible.builtin.shell: |
+      tee -a /home/svrn/.bashrc > /dev/null <<EOT
+      echo "bashrc -> source/export segment START"
+      export ROS1_INSTALL_PATH=/opt/ros/noetic
+      export ROS2_INSTALL_PATH=/opt/ros/foxy
+      source /opt/ros/foxy/setup.bash
+      export _colcon_cd_root=/opt/ros/foxy/
+      source /usr/share/colcon_cd/function/colcon_cd.sh
+      export ROS_DOMAIN_ID=3
+      source /usr/share/colcon_argcomplete/hook/colcon-argcomplete.bash
+      export SSL_CERT_FILE=/usr/lib/ssl/certs/ca-certificates.crt
+      export ROS2_WS=${HOME}/Workspace/ros2_ws
+      source ${HOME}/Workspace/ros2_ws/install/setup.bash
+      export PATH="$PATH:/$HOME/.local/bin"
+      export DEVICE_ID={{ device_id }}
+      echo "bashrc -> source/export segment END"
+      EOT
+      exit 0
+    register: myoutput2
+    changed_when: myoutput2.rc != 0
+    args:
+      executable: /bin/bash
+  - name: Print shell output
+    ansible.builtin.debug:
+      var: myoutput2.stdout_lines
+  - name: Build ros2 workspace
+    ansible.builtin.shell: |
+      cd /home/svrn/Workspace/ros2_ws
+      colcon build
+      exit 0
+    register: colcon_output
+    changed_when: colcon_output.rc != 0
+    args:
+      executable: /bin/bash
+  - name: Install nvm
+    ansible.builtin.shell: |
+      curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
+      exit 0
+    args:
+      creates: "{{ ansible_env.HOME }}/.nvm/nvm.sh"
+      executable: /bin/bash
+    tags:
+      - skip_ansible_lint
+    register: nvm_output
+    changed_when: nvm_output.rc != 0
+  - name: Print shell output
+    ansible.builtin.debug:
+      var: nvm_output.stdout_lines
+  - name: Install nodejs & npm version 8.9.0 via nvm
+    ansible.builtin.shell: |
+      nvm install 8.9.0
+      exit 0
+    register: nvm_output
+    changed_when: nvm_output.rc != 0
+    args:
+      executable: /bin/bash  
+  - name: Install ftp client (ncftp)
+    become: true
+    ansible.builtin.apt:
+      pkg:
+        - ncftp
+  - name: Test task
+    ansible.builtin.debug:
+      msg: variable -> {{ device_id }}
+    tags:
+      - debug
+  - name: Install (with pip) virtualenv within a user home directory
+    ansible.builtin.pip:
+      name: virtualenv
+      extra_args: --user
+  ## TODO: 
+  ## - install docker (sudo apt  install docker.io for firefly)
+  ## - add user to docker group to prevent docker socket permission denied error (https://stackoverflow.com/a/48957722/15096506)
+  ## - add insecure config for docker to be able to pull from harbor
+  ## - install python3, pip, virtualenv
+  ## - sudo apt install -y gpiod
+  ## - python3 -m pip install -U --user pip gpiod
+  ## - (sudo chmod g-rw /dev/gpiochip1 && sudo chgrp gpio /dev/gpiochip*) => gpio permissions to be able to access without sudo
+  ## - deploy docker ???
+  ## - deploy 'Scripts' folder (which should contain scripts that will be used to pull from FTP server)
+  ## - generate ssh key
+  ## - send machine_id, ssh_key & other info to MongoDB
+  ## - setup github deploy key using the generated ssh_key
+  ## - pip install dataclasses-json
+  # reboot may be necesery afterwards

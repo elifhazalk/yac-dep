@@ -1,0 +1,14 @@
+portenta:
+  hosts:
+    portenta_device_1:
+      ansible_host: 2.12.100.179
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    portenta_device_2:
+      ansible_host: 2.12.100.31
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    portenta_device_3:
+      ansible_host: 2.12.100.17
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"

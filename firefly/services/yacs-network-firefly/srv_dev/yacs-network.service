@@ -1,0 +1,14 @@
+[Unit]
+Description=YACS Network Service (Firefly)
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStartPre=/bin/sleep 10
+ExecStart=/bin/bash /var/yacs-network-firefly.sh
+LimitNPROC=1
+ProtectHome=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target

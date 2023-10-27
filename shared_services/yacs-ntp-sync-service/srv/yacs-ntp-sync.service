@@ -1,0 +1,14 @@
+[Unit]
+Description=NTP Client Configuration Service
+After=yacs-network.service
+
+[Service]
+Type=oneshot
+ExecStartPre=/bin/sleep 10
+ExecStart=/bin/python3 /var/script_runner.py --runViaRoot 1 --script /var/setup-ntp-config.sh --ntp 2.12.100.145 --useLoggingLib 0
+LimitNPROC=1
+ProtectHome=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target
