@@ -1,14 +1,135 @@
 portenta:
   hosts:
-    portenta_device_1:
-      ansible_host: 2.12.100.179
+    p-1:
+      ansible_host: 10.17.51.1
       ansible_user: "{{vault.SSH_USERNAME}}"
       ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
-    portenta_device_2:
-      ansible_host: 2.12.100.31
+    p-2:
+      ansible_host: 10.17.51.2
       ansible_user: "{{vault.SSH_USERNAME}}"
       ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
-    portenta_device_3:
-      ansible_host: 2.12.100.17
+    p-3:
+      ansible_host: 10.17.51.3
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    p-4:
+      ansible_host: 10.17.51.4
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    p-5:
+      ansible_host: 10.17.51.5
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    p-6:
+      ansible_host: 10.17.51.6
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    p-7:
+      ansible_host: 10.17.51.7
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    p-8:
+      ansible_host: 10.17.51.8
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    p-9:
+      ansible_host: 10.17.51.1
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    p-10:
+      ansible_host: 10.17.51.10
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    p-11:
+      ansible_host: 10.17.51.11
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    p-12:
+      ansible_host: 10.17.51.12
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    p-13:
+      ansible_host: 10.17.51.13
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    p-14:
+      ansible_host: 10.17.51.14
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    p-15:
+      ansible_host: 10.17.51.18
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    p-16:
+      ansible_host: 10.17.51.19
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    p-17:
+      ansible_host: 10.17.51.17
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}" 
+
+    r-1:
+      ansible_host: 10.17.50.1
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    r-2:
+      ansible_host: 10.17.50.5
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    r-3:
+      ansible_host: 10.17.50.3
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    r-4:
+      ansible_host: 10.17.50.18
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    r-5:
+      ansible_host: 10.17.50.22
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    r-6:
+      ansible_host: 10.17.50.20
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    r-7:
+      ansible_host: 10.17.50.13
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    r-8:
+      ansible_host: 10.17.50.6
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    r-9:
+      ansible_host: 10.17.50.12
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    r-10:
+      ansible_host: 10.17.50.21
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    r-11:
+      ansible_host: 10.17.50.24
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    r-12:
+      ansible_host: 10.17.50.25
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    r-13:
+      ansible_host: 10.17.50.10
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    r-14:
+      ansible_host: 10.17.50.7
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    r-15:
+      ansible_host: 10.17.50.11
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    r-16:
+      ansible_host: 10.17.50.9
       ansible_user: "{{vault.SSH_USERNAME}}"
       ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"

@@ -1,0 +1,73 @@
+- name: Update Echo UE Service
+  hosts: orangepi
+  vars_files:
+    - vault.yml
+  gather_facts: no
+  become: yes
+  vars:
+    DIRECTORY: "yacs_echo_ue"
+
+  vars_prompt:
+    - name: "version"
+      prompt: "Enter version (leave empty for 'latest'):"
+      private: no
+      default: "latest"
+
+  tasks:
+    - name: Kill SoundSimulation process if exists
+      ansible.builtin.shell:
+        cmd: "pkill -f SoundSimulation || true"
+      ignore_errors: yes
+    
+    - name: Remove yacs_echo_ue directory
+      ansible.builtin.file:
+        path: "{{ DIRECTORY }}"
+        state: absent
+
+    - name: Create folder
+      ansible.builtin.command:
+        cmd: "mkdir -p {{ DIRECTORY }}"
+      args:
+        creates: "{{ DIRECTORY }}"
+
+    - name: Download files directly on the target device
+      ansible.builtin.get_url:
+        url: "ftp://{{ vault.FTP_USER_PROD }}:{{ vault.FTP_PASS_PROD }}@{{ vault.FTP_HOST_PROD }}/{{ DIRECTORY }}/{{ version }}/{{ item.file }}"
+        dest: "{{ DIRECTORY }}/{{ item.file }}"
+        mode: "{{ item.mode | default(omit) }}"
+      loop:
+        - file: SoundSimulation.zip
+      loop_control:
+        loop_var: item
+    
+    - name: Ensure temp directory exists for extraction
+      ansible.builtin.file:
+        path: "{{ DIRECTORY }}/temp"
+        state: directory
+        mode: '0755'
+
+    - name: Extract zip file
+      ansible.builtin.unarchive:
+        src: "{{ DIRECTORY }}/SoundSimulation.zip"
+        dest: "{{ DIRECTORY }}/temp"
+        remote_src: yes
+
+    - name: Merge extracted files (overwrite existing)
+      ansible.builtin.command:
+        cmd: "rsync -a --ignore-existing {{ DIRECTORY }}/temp/SoundSimulation/ {{ DIRECTORY }}/"
+
+    - name: Remove temporary directory
+      ansible.builtin.file:
+        path: "{{ DIRECTORY }}/temp"
+        state: absent
+
+    - name: Remove zip file
+      ansible.builtin.file:
+        path: "{{ DIRECTORY }}/SoundSimulation.zip"
+        state: absent
+    
+    - name: Grant execute permission to SoundSimulation-Arm64.sh
+      ansible.builtin.file:
+        path: "{{ DIRECTORY }}/SoundSimulation-Arm64.sh"
+        mode: '755'
+        state: file

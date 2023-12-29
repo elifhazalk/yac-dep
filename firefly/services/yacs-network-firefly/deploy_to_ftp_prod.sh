@@ -25,6 +25,16 @@ function check_archive_status()
 }
 
 FTP_HOST="31.141.245.47"
+
+echo "hostname: ${HOSTNAME}"
+if [ "$HOSTNAME" = "CMSENLER-DELL" ]; then
+    echo "selecting FTP_HOST for CMSENLER-DELL"
+    FTP_HOST="31.141.245.47"
+elif [ "$HOSTNAME" = "svrn" ]; then # for pöh-dev pc
+    echo "selecting FTP_HOST for svrn (at prod)"
+    FTP_HOST="10.17.100.2"
+fi
+
 FTP_PORT="21"
 FTP_USER="svrn"
 FTP_PASS="$FTP_PASS_PROD"

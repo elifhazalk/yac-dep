@@ -22,7 +22,7 @@
     - name: Add  harbor hostname to /etc/hosts
       lineinfile:
         path: /etc/hosts
-        line: "2.12.100.145 harbor"
+        line: "10.17.100.2 harbor"
         state: present
 
     - name: Create folder
@@ -41,10 +41,22 @@
         - file: setup.sh
           mode: "0755"
         - file: docker-compose.yml
+        - file: promtail-config.j2
       loop_control:
         loop_var: item
 
-    - name: Docker login for dev
+    - name: Fetch the template back to the Ansible Controller
+      ansible.builtin.fetch:
+        src: "{{ DIRECTORY }}/promtail-config.j2"
+        dest: "promtail-config.j2"
+        flat: yes
+
+    - name: Apply the fetched promtail template to create configuration on target
+      ansible.builtin.template:
+        src: "promtail-config.j2"
+        dest: "{{ DIRECTORY }}/promtail-config.yaml"
+
+    - name: Docker login for prod
       command: docker login {{ vault.HARBOR_HOST_DEV }} -u {{ vault.HARBOR_USER_DEV }} -p {{ vault.HARBOR_PASS_DEV }}
 
     - name: Stop and remove Docker container

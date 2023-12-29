@@ -1,0 +1,26 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://10.17.100.2:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: {{ ansible_host }}
+    journal:
+      path: /var/log/journal
+      labels:
+        job: {{ ansible_host }}
+
+    relabel_configs:
+      - source_labels: ["__journal__systemd_unit"]
+        target_label: unit
+      - source_labels: ["__journal__hostname"]
+        target_label: hostname
+
+    pipeline_stages:
+      - regex:
+          expression: '^(?P<timestamp>\w+\s+\d+\s+\d+:\d+:\d+)\s\w+\s\w+\[\d+\]:\s(?P<message>.*)$'

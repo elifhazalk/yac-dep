@@ -3,6 +3,7 @@
   vars_files:
     - vault.yml
   gather_facts: no
+  become: yes
   vars:
     DIRECTORY: "yacs_lynx_sketch"
   tasks:

@@ -36,6 +36,12 @@
       become: true
       command: systemctl stop yacs-orchestrator.service
 
+    - name: Install avrdude package
+      ansible.builtin.apt:
+        name: avrdude
+        state: present
+      become: true
+
     - name: Execute script with .bashrc sourced
       ansible.builtin.shell:
         cmd: "bash -ic 'source ~/.bashrc && echo ROS2_WS: ${ROS2_WS} && ./setup.sh'"

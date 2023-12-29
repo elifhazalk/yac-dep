@@ -107,17 +107,14 @@
       become: true
       command: pip3 install colcon-common-extensions
 
-
-
     - name: Copy ros2_install_script.sh to server
       copy:
-        src: ros2_install_script.sh  
+        src: ros2_install_script.sh
         dest: /tmp/ros2_install_script.sh
-        mode: '0755'
+        mode: "0755"
 
     - name: Execute ros2_install_script.sh on server
       command: /tmp/ros2_install_script.sh
-
 
     - name: Install additional ROS packages
       become: true
@@ -130,10 +127,10 @@
 
     - name: Copy nvm.sh to server
       copy:
-        src: nvm.sh  
+        src: nvm.sh
         dest: /tmp/nvm.sh
-        mode: '0755'
-      
+        mode: "0755"
+
     - name: Run nvm.sh on server
       command: /bin/bash /tmp/nvm.sh
 
@@ -159,6 +156,8 @@
           export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
           export RMW_FASTRTPS_USE_QOS_FROM_XML=1
           export FASTRTPS_DEFAULT_PROFILES_FILE=$CONFIGS_DIR/ros_middleware_config/localhost_only.xml
+          unset RMW_FASTRTPS_USE_QOS_FROM_XML
+          echo "bashrc -> end"
       become: yes
 
     - name: Set the timezone to Asia/Istanbul
@@ -168,9 +167,3 @@
     - name: Set net_raw capability for node binary
       command: sudo setcap cap_net_raw+eip /tmp/.nvm/versions/node/v8.9.0/bin/node
       become: yes
-
-
-
-
-
-

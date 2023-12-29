@@ -1,11 +1,11 @@
 ---
-- name: Update Lyra Service
+- name: Update Halley Service
   hosts: server
   vars_files:
     - vault.yml
   gather_facts: no
   vars:
-    DIRECTORY: "yacs_lyra_service"
+    DIRECTORY: "yacs_halley_service"
   vars_prompt:
     - name: "version"
       prompt: "Enter version (leave empty for 'latest'):"
@@ -25,7 +25,6 @@
         dest: "{{ DIRECTORY }}/{{ version }}/{{ item.file }}"
         mode: "{{ item.mode | default(omit) }}"
       loop:
-        - file: .env
         - file: setup.sh
           mode: "0755"
         - file: docker-compose-prod.yml

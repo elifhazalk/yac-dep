@@ -1,58 +1,78 @@
 firefly:
   hosts:
     firefly_device_1:
-      ansible_host: 2.12.122.9
+      ansible_host: 10.17.52.1
       ansible_user: "{{vault.SSH_USERNAME}}"
       ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
     firefly_device_2:
-      ansible_host: 2.12.122.15
+      ansible_host: 10.17.52.2
       ansible_user: "{{vault.SSH_USERNAME}}"
       ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
     firefly_device_3:
-      ansible_host: 2.12.122.7
+      ansible_host: 10.17.52.3
       ansible_user: "{{vault.SSH_USERNAME}}"
       ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
     firefly_device_4:
-      ansible_host: 2.12.100.96
+      ansible_host: 10.17.52.4
       ansible_user: "{{vault.SSH_USERNAME}}"
       ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
     firefly_device_5:
-      ansible_host: 2.12.122.13
+      ansible_host: 10.17.52.5
       ansible_user: "{{vault.SSH_USERNAME}}"
       ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
     firefly_device_6:
-      ansible_host: 2.12.122.10
+      ansible_host: 10.17.52.6
       ansible_user: "{{vault.SSH_USERNAME}}"
       ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
     firefly_device_7:
-      ansible_host: 2.12.122.11
+      ansible_host: 10.17.52.7
       ansible_user: "{{vault.SSH_USERNAME}}"
       ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
     firefly_device_8:
-      ansible_host: 2.12.122.12
+      ansible_host: 10.17.52.8
       ansible_user: "{{vault.SSH_USERNAME}}"
       ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
     firefly_device_9:
-      ansible_host: 2.12.122.6
+      ansible_host: 10.17.52.9
       ansible_user: "{{vault.SSH_USERNAME}}"
       ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
     firefly_device_10:
-      ansible_host: 2.12.122.1
+      ansible_host: 10.17.52.10
       ansible_user: "{{vault.SSH_USERNAME}}"
       ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
     firefly_device_11:
-      ansible_host: 2.12.122.19
+      ansible_host: 10.17.52.11
       ansible_user: "{{vault.SSH_USERNAME}}"
       ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
     firefly_device_12:
-      ansible_host: 2.12.122.8
+      ansible_host: 10.17.52.12
       ansible_user: "{{vault.SSH_USERNAME}}"
       ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
     firefly_device_13:
-      ansible_host: 2.12.122.3
+      ansible_host: 10.17.52.13
       ansible_user: "{{vault.SSH_USERNAME}}"
       ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
     firefly_device_14:
-      ansible_host: 2.12.122.7
+      ansible_host: 10.17.52.14
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    firefly_device_15:
+      ansible_host: 10.17.52.15
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    firefly_device_16:
+      ansible_host: 10.17.52.16
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    firefly_device_17:
+      ansible_host: 10.17.52.17
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    firefly_device_18:
+      ansible_host: 10.17.52.18
+      ansible_user: "{{vault.SSH_USERNAME}}"
+      ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"
+    firefly_device_19:
+      ansible_host: 10.17.52.19
       ansible_user: "{{vault.SSH_USERNAME}}"
       ansible_ssh_pass: "{{vault.SSH_PASSWORD}}"

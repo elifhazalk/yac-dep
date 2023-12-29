@@ -32,9 +32,18 @@
       loop_control:
         loop_var: item
 
-    - name: Stop yacs-orchestrator.service
+    - name: Check if the yacs-orchestrator service exists and is active
+      command: "systemctl is-active yacs-orchestrator"
+      register: service_status
+      ignore_errors: yes
       become: true
-      command: systemctl stop yacs-orchestrator.service
+
+    - name: Stop the yacs-orchestrator service if it's active and exists
+      systemd:
+        name: yacs-orchestrator
+        state: stopped
+      when: service_status.rc == 0 and service_status.stdout == "active"
+      become: true
 
     - name: Execute script with .bashrc sourced
       ansible.builtin.shell:
@@ -44,7 +53,14 @@
         executable: /bin/bash
       become: true
       become_user: svrn
+      register: setup_script_output
 
-    - name: Restart yacs-orchestrator.service
+    - name: Display the setup script output
+      debug:
+        var: setup_script_output.stdout
+
+    - name: Restart the yacs-orchestrator service
+      systemd:
+        name: yacs-orchestrator
+        state: restarted
       become: true
-      command: systemctl restart yacs-orchestrator.service

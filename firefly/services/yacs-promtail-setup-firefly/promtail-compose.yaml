@@ -1,0 +1,14 @@
+version: "3"
+services:
+  promtail:
+    image: grafana/promtail:latest
+    container_name: promtail
+    network_mode: host
+    volumes:
+      - ./promtail-config.yaml:/etc/promtail/promtail-config.yaml
+      - /var/log/journal/:/var/log/journal/
+      - /run/log/journal/:/run/log/journal/
+      - /etc/machine-id:/etc/machine-id
+    command: -config.file=/etc/promtail/promtail-config.yaml
+    restart:
+      always

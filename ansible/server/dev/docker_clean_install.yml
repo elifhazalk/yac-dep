@@ -1,0 +1,182 @@
+---
+- name: Install Docker on Ubuntu
+  hosts: vmyacsros_dev
+  remote_user: svrn
+  vars_files:
+    - vault.yml
+  become: yes
+
+  tasks:
+    - name: Debug Gathered Facts
+      debug:
+        var: ansible_facts
+
+    - name: Remove old Docker-related packages
+      apt:
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - docker.io
+        - docker-doc
+        - docker-compose
+        - docker-compose-v2
+        - podman-docker
+        - containerd
+        - runc
+
+    - name: Install required packages
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - ca-certificates
+        - curl
+        - gnupg
+
+    - name: Add Docker's official GPG key
+      become: yes
+      apt:
+        name:
+          - ca-certificates
+          - curl
+          - gnupg
+        state: present
+
+    - name: Create Docker GPG key directory
+      become: yes
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: "0755"
+
+    - name: Download and install Docker GPG key
+      become: yes
+      shell: "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg"
+      args:
+        creates: /etc/apt/keyrings/docker.gpg
+
+    - name: Set permissions for Docker GPG key
+      become: yes
+      file:
+        path: /etc/apt/keyrings/docker.gpg
+        mode: "a+r"
+
+    - name: Create Docker sources.list.d directory
+      become: yes
+      file:
+        path: /etc/apt/sources.list.d
+        state: directory
+        mode: "0755"
+
+    - name: Remove existing Docker.list file
+      become: yes
+      file:
+        path: /etc/apt/sources.list.d/docker.list
+        state: absent
+
+    - name: Create Docker.list file
+      become: yes
+      file:
+        path: /etc/apt/sources.list.d/docker.list
+        state: touch
+        mode: "0644"
+
+    - name: Run dpkg --print-architecture and save to variable
+      become: yes
+      command: "dpkg --print-architecture"
+      register: dpkg_arch
+      changed_when: false
+
+    - name: Run os-release and save VERSION_CODENAME to variable
+      become: yes
+      command: "grep -oP 'VERSION_CODENAME=\\K\\S+' /etc/os-release"
+      register: os_codename
+      changed_when: false
+
+    - name: Add Docker repository to Apt sources
+      become: yes
+      lineinfile:
+        path: /etc/apt/sources.list.d/docker.list
+        line: "deb [arch={{ dpkg_arch.stdout }} signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ os_codename.stdout }} stable"
+      notify: Update apt cache
+
+    - name: Update apt cache
+      become: yes
+      apt:
+        update_cache: yes
+
+    - name: Install Docker packages
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+
+    - name: Create Docker group
+      group:
+        name: docker
+        state: present
+
+    - name: Add user to Docker group
+      user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
+
+    - name: Switch to new Docker group
+      command: newgrp docker
+      args:
+        creates: /usr/bin/docker
+
+    - name: Set Docker directory ownership and permissions
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "g+rwx"
+      loop:
+        - /home/{{ ansible_user }}/.docker
+
+    - name: Check Docker installation
+      command: docker run hello-world
+
+    - name: Enable Docker service
+      systemd:
+        name: docker
+        enabled: yes
+        state: started
+
+    - name: Enable containerd service
+      systemd:
+        name: containerd
+        enabled: yes
+        state: started
+
+    - name: Configure Docker JSON logging driver for rotated logs
+      copy:
+        content: |
+          {
+            "log-driver": "json-file",
+            "log-opts": {
+              "max-size": "10m",
+              "max-file": "10"
+            }
+          }
+        dest: /etc/docker/daemon.json
+      notify: Reload Docker
+      when: ansible_distribution_release == 'focal' # Only perform on Ubuntu 20.04 (Focal Fossa)
+
+  handlers:
+    - name: Reload Docker
+      systemd:
+        name: docker
+        state: reloaded
+
+    - name: Update apt cache
+      become: yes
+      apt:
+        update_cache: yes

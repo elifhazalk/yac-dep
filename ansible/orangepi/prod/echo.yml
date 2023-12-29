@@ -15,16 +15,26 @@
       default: "latest"
 
   tasks:
+    - name: Kill SoundSimulation process if exists
+      ansible.builtin.shell:
+        cmd: "pkill -f SoundSimulation || true"
+      ignore_errors: yes
+    
+    - name: Remove yacs_echo directory
+      ansible.builtin.file:
+        path: "{{ DIRECTORY }}"
+        state: absent
+
     - name: Create folder
       ansible.builtin.command:
-        cmd: "mkdir -p {{ DIRECTORY }}/{{ version }}"
+        cmd: "mkdir -p {{ DIRECTORY }}"
       args:
-        creates: "{{ DIRECTORY }}/{{ version }}"
+        creates: "{{ DIRECTORY }}"
 
     - name: Download files directly on the target device
       ansible.builtin.get_url:
         url: "ftp://{{ vault.FTP_USER_PROD }}:{{ vault.FTP_PASS_PROD }}@{{ vault.FTP_HOST_PROD }}/{{ DIRECTORY }}/{{ version }}/{{ item.file }}"
-        dest: "{{ DIRECTORY }}/{{ version }}/{{ item.file }}"
+        dest: "{{ DIRECTORY }}/{{ item.file }}"
         mode: "{{ item.mode | default(omit) }}"
       loop:
         - file: echo.zip
@@ -33,13 +43,13 @@
 
     - name: Extract zip file
       ansible.builtin.unarchive:
-        src: "{{ DIRECTORY }}/{{ version }}/echo.zip"
-        dest: "{{ DIRECTORY }}/{{ version }}"
+        src: "{{ DIRECTORY }}/echo.zip"
+        dest: "{{ DIRECTORY }}"
         remote_src: yes
 
     - name: Remove zip file
       ansible.builtin.file:
-        path: "{{ DIRECTORY }}/{{ version }}/echo.zip"
+        path: "{{ DIRECTORY }}/echo.zip"
         state: absent
 
     - name: Check if Poetry is installed
@@ -58,13 +68,26 @@
     - name: Remove previous Poetry environments
       ansible.builtin.shell:
         cmd: "poetry env list --full-path | xargs -I {} rm -rf {}"
-        chdir: "{{ DIRECTORY }}/{{ version }}"
+        chdir: "{{ DIRECTORY }}"
       ignore_errors: yes
+
+    - name: Check if the service exists
+      command: systemctl status {{ SERVICE_NAME }}
+      register: service_status
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Stop and disable the service
+      systemd:
+        name: "{{ SERVICE_NAME }}"
+        enabled: no
+        state: stopped
+      when: service_status.rc == 0
 
     - name: Install dependencies using Poetry
       ansible.builtin.command:
         cmd: "poetry install"
-        chdir: "{{ DIRECTORY }}/{{ version }}"
+        chdir: "{{ DIRECTORY }}"
 
     - name: Create service file
       become: yes
@@ -72,14 +95,14 @@
         dest: "/etc/systemd/system/{{ SERVICE_NAME }}.service"
         owner: root
         group: root
-        mode: '0644'
+        mode: "0644"
         content: |
           [Unit]
           Description={{ SERVICE_NAME }}
 
           [Service]
-          ExecStart=/usr/local/bin/poetry run python src/yacs_echo/main.py
-          WorkingDirectory= /root/{{ DIRECTORY }}/{{ version }}
+          ExecStart=/usr/local/bin/poetry run python src/yacs_echo/main.py {{ version }}
+          WorkingDirectory= /root/{{ DIRECTORY }}
           User=root
           Group=root
           Restart=always

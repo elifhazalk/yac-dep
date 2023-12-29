@@ -2,16 +2,17 @@
 - name: Update Bodypix Service
   hosts: server
   vars_files:
-  - vault.yml
+    - vault.yml
   gather_facts: no
   vars:
     DIRECTORY: "yacs_bodypix"
   vars_prompt:
-    - name: Add  harbor hostname to /etc/hosts
-      lineinfile:
-        path: /etc/hosts
-        line: '2.12.100.145 harbor'
-        state: present
+    - name: "version"
+      prompt: "Enter version (leave empty for 'latest'):"
+      private: no
+      default: "latest"
+
+  tasks:
     - name: Create folder
       ansible.builtin.command:
         cmd: "mkdir -p {{ DIRECTORY }}/{{ version }}"
@@ -33,7 +34,7 @@
 
     - name: Docker login for dev
       command: docker login {{ vault.HARBOR_HOST_DEV }} -u {{ vault.HARBOR_USER_DEV }} -p {{ vault.HARBOR_PASS_DEV }}
-      
+
     - name: Stop and remove Docker container
       ansible.builtin.docker_container:
         name: "{{ DIRECTORY }}"

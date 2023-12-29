@@ -41,6 +41,16 @@
     - name: Enable yacs-network.service
       command: systemctl enable yacs-network.service
     
+    # Setup NTP configuration on portenta devices
+    - name: Copy yacs-ntp.sh to server
+      ansible.builtin.get_url:
+        url: "ftp://{{ vault.FTP_USER_PROD }}:{{ vault.FTP_PASS_PROD }}@{{ vault.FTP_HOST_PROD }}/{{ CONFIG_DIRECTORY }}/yacs-ntp.sh"
+        dest: /tmp/yacs-ntp.sh
+        mode: "0755"
+
+    - name: Execute edit.sh on server
+      command: /tmp/yacs-ntp.sh
+      
     # Setup docker configuration on portenta devices
     - name: Download yacs-docker.sh and give permissions
       ansible.builtin.get_url:

@@ -1,0 +1,14 @@
+[Unit]
+Description=YACS Access Point Switcher Service (Firefly)
+After=yacs-network.service
+
+[Service]
+Type=simple
+ExecStart=/bin/bash /var/yacs-ap-switcher.sh
+LimitNPROC=1
+ProtectHome=true
+ProtectSystem=full
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
